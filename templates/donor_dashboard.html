@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard - NourishNet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/phosphor-icons"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f7f7; }
+        .card { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white shadow-md p-4 sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-orange-600 flex items-center">
+                <i class="ph-fill ph-leaf-heart text-3xl mr-2"></i> NourishNet
+            </h1>
+            <nav id="nav-actions">
+                <span class="text-gray-600 mr-4 hidden sm:inline">
+                    Logged in as Donor: <strong>{{ user.name }}</strong>
+                </span>
+                <a href="{{ url_for('logout') }}" class="bg-red-500 text-white px-3 py-1 rounded-full text-sm hover:bg-red-600">
+                    Sign Out
+                </a>
+            </nav>
+        </div>
+    </header>
+
+     <main class="flex-grow p-4 md:p-8 max-w-6xl mx-auto w-full">
+        <div class="flex justify-between items-center mb-6 border-b pb-4">
+            <h2 class="text-3xl font-bold text-orange-600">Donor Dashboard</h2>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 border-t-4 border-orange-500">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="ph ph-plus-circle mr-2 text-orange-600"></i> New Donation Request
+            </h3>
+            <form method="POST" action="{{ url_for('post_donation') }}" class="space-y-4">
+                <textarea name="food_details" rows="3" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-300" placeholder="Food Details (Quantity, Type): e.g., 50 servings of hot pasta and salad."></textarea>
+                <input type="text" name="pickup_address" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-300" placeholder="Full Pick-up Address">
+                <input type="text" name="pickup_time" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-300" placeholder="Latest Pick-up Time/Date (e.g., Today by 6:00 PM)">
+                <button type="submit" class="w-full bg-orange-600 text-white font-bold py-2 rounded-lg hover:bg-orange-700">
+                    Post Donation Request
+                </button>
+            </form>
+        </div>
+
+        <!-- Donation History -->
+        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Your Active Donation History</h3>
+        <div id="donor-requests" class="space-y-4">
+            {% if requests %}
+                {% for request in requests %}
+                    {% set status_info = {
+                        'pending': {'class': 'bg-yellow-100 text-yellow-800 border-yellow-400', 'text': 'PENDING (Awaiting NGO Acceptance)'},
+                        'accepted': {'class': 'bg-blue-100 text-blue-800 border-blue-400', 'text': 'ACCEPTED by ' ~ (request.ngoName or 'an NGO')},
+                        'completed': {'class': 'bg-green-100 text-green-800 border-green-400', 'text': 'COMPLETED'}
+                    }.get(request.status, {'class': 'bg-gray-100 text-gray-800 border-gray-400', 'text': 'UNKNOWN'}) %}
+                    <div class="card p-4 border rounded-lg bg-white shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center border-l-4 border-{{ 'yellow' if request.status == 'pending' else 'blue' if request.status == 'accepted' else 'green' }}-500">
+                        <div class="flex-grow">
+                            <h4 class="text-lg font-bold text-gray-800">{{ request.foodDetails }}</h4>
+                            <p class="text-sm text-gray-600">Pick-up at: {{ request.pickupAddress }} by {{ request.pickupTime }}</p>
+                            {% if request.status == 'accepted' %}
+                                <p class="text-sm mt-2 text-blue-700">Accepted By: <strong>{{ request.ngoName }}</strong></p>
+                            {% endif %}
+                        <div class="mt-3 md:mt-0 flex-shrink-0">
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full {{ status_info.class }} border">
+                                {{ status_info.text }}
+                            </span>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-center p-6 bg-white rounded-lg shadow-inner text-gray-500">You have no active or completed donation requests.</p>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>
+                    

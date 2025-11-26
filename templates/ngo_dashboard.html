@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGO Dashboard - NourishNet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/phosphor-icons"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f7f7; }
+        .card { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-white shadow-md p-4 sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-green-600 flex items-center">
+                <i class="ph-fill ph-leaf-heart text-3xl mr-2"></i> NourishNet
+            </h1>
+            <nav id="nav-actions">
+                <span class="text-gray-600 mr-4 hidden sm:inline">
+                    Logged in as NGO: <strong>{{ user.name }}</strong>
+                </span>
+                <a href="{{ url_for('logout') }}" class="bg-red-500 text-white px-3 py-1 rounded-full text-sm hover:bg-red-600">
+                    Sign Out
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow p-4 md:p-8 max-w-6xl mx-auto w-full">
+        <!-- Statistics Section -->
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 border-t-4 border-green-500">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="ph ph-chart-bar mr-2 text-green-600"></i> Platform Statistics
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">{{ total_users }}</div>
+                    <div class="text-sm text-gray-600">Total Users</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">{{ total_donations }}</div>
+                    <div class="text-sm text-gray-600">Total Donations</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-yellow-600">{{ pending }}</div>
+                    <div class="text-sm text-gray-600">Pending</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-orange-600">{{ accepted }}</div>
+                    <div class="text-sm text-gray-600">Accepted</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600">{{ completed }}</div>
+                    <div class="text-sm text-gray-600">Completed</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6 border-b pb-4">
+            <h2 class="text-3xl font-bold text-green-600">NGO Partner Dashboard</h2>
+            <p class="text-gray-600 mt-1">Viewing all pending donations. Click 'Accept' to claim and coordinate pick-up.</p>
+        </div>
+        <h3 class="text-2xl font-semibold text-gray-800 mb-4">Available Pending Donations</h3>
+        <div id="ngo-requests" class="space-y-4">
+            {% if pending_requests %}
+                {% for request in pending_requests %}
+                    <div class="card p-4 border border-yellow-300 rounded-lg bg-yellow-50 shadow-md flex flex-col md:flex-row justify-between items-start md:items-center border-l-4 border-yellow-500">
+                        <div class="flex-grow">
+                            <h4 class="text-xl font-bold text-gray-800">{{ request.foodDetails }}</h4>
+                            <p class="text-sm text-gray-600 mt-1">From: <strong>{{ request.donorName }}</strong></p>
+                            <p class="text-md text-gray-700 mt-2">
+                                <i class="ph ph-map-pin text-lg mr-1 text-orange-600"></i>
+                                <strong>Address:</strong> {{ request.pickupAddress }}
+                            </p>
+                            <p class="text-md text-gray-700">
+                                <i class="ph ph-clock text-lg mr-1 text-orange-600"></i>
+                                <strong>Latest Pick-up:</strong> {{ request.pickupTime }}
+                            </p>
+                        </div>
+                        <div class="mt-4 md:mt-0 flex-shrink-0">
+                            <a href="{{ url_for('accept_donation', donation_id=request.donation_id) }}" class="bg-green-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-green-700 flex items-center">
+                                <i class="ph ph-check-circle mr-2"></i> Accept Donation
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-center p-6 bg-white rounded-lg shadow-inner text-gray-500">No pending donations available.</p>
+            {% endif %}
+        </div>
+        <h3 class="text-2xl font-semibold text-gray-800 mt-10 mb-4">Donations Accepted by You</h3>
+        <div id="ngo-accepted-requests" class="space-y-4">
+            {% if accepted_requests %}
+                {% for request in accepted_requests %}
+                    {% set is_completed = request.status == 'completed' %}
+                    <div class="card p-4 border border-blue-300 rounded-lg bg-blue-50 shadow-md flex flex-col md:flex-row justify-between items-start md:items-center border-l-4 border-blue-500">
+                        <div class="flex-grow">
+                             <h4 class="text-xl font-bold text-gray-800">{{ request.foodDetails }}</h4>
+                            <p class="text-sm text-gray-600 mt-1">Donor: <strong>{{ request.donorName }}</strong> | Pick-up: {{ request.pickupAddress }} ({{ request.pickupTime }})</p>
+                            <p class="text-sm text-blue-700 font-semibold mt-2">
+                                Status: {{ 'COMPLETED - Thank you!' if is_completed else 'ACCEPTED - Coordinate Pickup' }}
+                            </p>
+                            <p class="text-xs text-gray-500">Donor Contact: {{ request.donorContact or 'N/A' }}</p>
+                        </div>
+                        <div class="mt-4 md:mt-0 flex-shrink-0">
+                             {% if not is_completed %}
+                                <a href="{{ url_for('complete_donation', donation_id=request.donation_id) }}" class="bg-orange-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-orange-700 flex items-center">
+                                    Mark as Completed
+                                </a>
+                            {% else %}
+                                <span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-200 text-green-800">Completed</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-center p-6 bg-white rounded-lg shadow-inner text-gray-500">You have not yet accepted any donations.</p>
+            {% endif %}
+        </div>
+    </main>
+</body>
+</html>
+
